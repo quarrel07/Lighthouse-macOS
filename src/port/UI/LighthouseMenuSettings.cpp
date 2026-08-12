@@ -281,8 +281,10 @@ void LighthouseMenu::AddMenuSettings() {
                      .Tooltip("Changes the scaling of the ImGui menu elements.")
                      .DefaultIndex(1)
                      .ComponentAlignment(ComponentAlignments::Right)
-                     .LabelPosition(LabelPositions::Far));
-    //.Callback([](WidgetInfo& info) { GameEngine::Instance->ScaleImGui(); });
+                     .LabelPosition(LabelPositions::Far))
+        // Apply the new scale immediately (2ship wires the same callback); without it the CVar
+        // changes but nothing calls ScaleImGui() until the next launch.
+        .Callback([](WidgetInfo& info) { GameEngine::ScaleImGui(); });
 
     // Audio Settings
     path.sidebarName = "Audio";
