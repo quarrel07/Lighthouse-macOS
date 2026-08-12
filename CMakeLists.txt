@@ -797,6 +797,12 @@ add_custom_target(CreateOSXIcons
     add_dependencies(${PROJECT_NAME} CreateOSXIcons)
     configure_file("${CMAKE_SOURCE_DIR}/Info.plist" "${CMAKE_BINARY_DIR}/Info.plist" COPYONLY)
 
+    # Assemble the self-contained, codesigned Lighthouse.app from the normal build (icon,
+    # resources, dylib relink incl. SDL3, ad-hoc codesign). The port .o2r must exist before
+    # the bundle step copies it in, so make it a build dependency.
+    include(${CMAKE_SOURCE_DIR}/cmake/macos/apple_bundle.cmake)
+    add_dependencies(${PROJECT_NAME} GeneratePortO2R)
+
     file(DOWNLOAD
         https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/master/gamecontrollerdb.txt
         ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt)
