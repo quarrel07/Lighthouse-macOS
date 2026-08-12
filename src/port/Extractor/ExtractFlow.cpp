@@ -1,5 +1,6 @@
 #include "port/Engine.h"
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -146,6 +147,9 @@ bool AnyRomArchiveExists() {
 } // namespace
 
 void GameEngine::RunExtract(int argc, char* argv[]) {
+    // The bail-outs below use _Exit instead of exit: exit() runs static destructors, and the
+    // libultraship Context singleton (a static unique_ptr) then logs from ~Context after spdlog's
+    // own statics are already destroyed -> SIGSEGV on what should be a clean quit.
     bool extractDone = false;
     ExtractSteps extractStep = ES_PORT_ARCHIVE;
     WindowsSteps windowsStep = WS_TEMP;
@@ -198,13 +202,13 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                                  "\x1b[2;2HYou've launched Lighthouse with an old ROM O2R file."
                                  "\x1b[4;2HPlease regenerate a new ROM O2R and relaunch."
                                  "\x1b[6;2HPress the Home button to exit...",
-                                 "OK", "", [&]() { exit(1); });
+                                 "OK", "", [&]() { _Exit(1); });
 #elif defined(__WIIU__)
     LighthouseGui::RegisterPopup("Outdated ROM Archives",
                                  "You've launched Lighthouse with an old a ROM O2R file.\n\n"
                                  "Please generate a ROM O2R and relaunch.\n\n"
                                  "Press and hold the Power button to shutdown...",
-                                 "OK", "", [&]() { exit(1); });
+                                 "OK", "", [&]() { _Exit(1); });
     OSFatal();
 #endif
 
@@ -216,7 +220,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
             "OK", "", [&]() {
                 lhFast3dWindow = nullptr;
                 context = nullptr;
-                exit(1);
+                _Exit(1);
             });
     } else if (shouldRegen) {
         LighthouseGui::RegisterPopup("Outdated ROM Archives",
@@ -285,7 +289,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
 #endif
                     std::string title =
                         !std::filesystem::exists(assets_path) ? "Missing lighthouse.o2r" : "lighthouse.o2r is outdated";
-                    LighthouseGui::RegisterPopup(title, msg, "OK", "", [&]() { exit(1); });
+                    LighthouseGui::RegisterPopup(title, msg, "OK", "", [&]() { _Exit(1); });
                 }
                 continue;
             }
@@ -313,7 +317,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                                     threadPool = nullptr;
                                     lhFast3dWindow = nullptr;
                                     context = nullptr;
-                                    exit(0);
+                                    _Exit(0);
                                 });
                         } else {
                             windowsStep = WS_PERMS;
@@ -341,7 +345,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                                     threadPool = nullptr;
                                     lhFast3dWindow = nullptr;
                                     context = nullptr;
-                                    exit(0);
+                                    _Exit(0);
                                 });
                         } else {
                             fclose(tfile);
@@ -354,7 +358,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                                         threadPool = nullptr;
                                         lhFast3dWindow = nullptr;
                                         context = nullptr;
-                                        exit(0);
+                                        _Exit(0);
                                     });
                             }
                             windowsStep = WS_ONEDRIVE;
@@ -372,7 +376,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                                     threadPool = nullptr;
                                     lhFast3dWindow = nullptr;
                                     context = nullptr;
-                                    exit(0);
+                                    _Exit(0);
                                 });
                         } else {
                             windowsStep = WS_DONE;
@@ -406,7 +410,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                             threadPool = nullptr;
                             lhFast3dWindow = nullptr;
                             context = nullptr;
-                            exit(0);
+                            _Exit(0);
                         });
                     break;
                 }
@@ -455,7 +459,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                                     threadPool = nullptr;
                                     lhFast3dWindow = nullptr;
                                     context = nullptr;
-                                    exit(0);
+                                    _Exit(0);
                                 });
                         } else {
                             extractStep = ES_VERIFY;
@@ -571,7 +575,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
                             threadPool = nullptr;
                             lhFast3dWindow = nullptr;
                             context = nullptr;
-                            exit(0);
+                            _Exit(0);
                         });
                     }
                     continue;
@@ -588,7 +592,7 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
             threadPool = nullptr;
             lhFast3dWindow = nullptr;
             context = nullptr;
-            exit(0);
+            _Exit(0);
         }
         wnd->HandleEvents();
         UIWidgets::Colors themeColor =

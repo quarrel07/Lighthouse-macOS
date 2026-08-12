@@ -41,10 +41,11 @@ No copyrighted assets are bundled. You must supply your own legally-dumped ROM.
 | 4 | **Packaging** `cmake/macos/apple_bundle.cmake` | Build a self-contained `.app`: set `MACOSX_BUNDLE`, compile the Liquid Glass icon, bundle `lighthouse.o2r` + `config.yml` + the first-run extractor's `assets/` into `Contents/Resources`, relink Homebrew dylibs into `Contents/Frameworks`, and ad-hoc codesign. Homebrew's `sdl2` is now **sdl2-compat**, which `dlopen`s SDL3 at runtime — `fixup_bundle` can't see a `dlopen`, so `libSDL3.dylib` is copied in by hand (otherwise the app aborts with *"Failed loading SDL3 library."*). |
 | 5 | **Liquid Glass app icon** `macosx/lighthouseicon.icon` | A native [Icon Composer](https://developer.apple.com/documentation/Xcode/creating-your-app-icon-using-icon-composer) icon compiled with `actool` into `Assets.car` (+ a flattened `.icns` for older systems), so the Dock/Finder icon uses the real macOS 26+ Liquid Glass material instead of a flat PNG. On toolchains without `.icon` support the build falls back to a flat icns from upstream's `logo.png`. |
 | 6 | **Metadata** `macosx/Info.plist.in` | The bundle plist now carries the real project version (upstream's static `Info.plist` is pinned at `0.1.0`, so Finder's Get Info always disagreed with the app), plus `CFBundleIconName = lighthouseicon` and the HiDPI capability keys. |
+| 7 | **Clean quit** `src/port/Engine.cpp` | Declining the first-run ROM prompt (and the other extraction bail-outs) called `exit()`, which runs static destructors: the libultraship `Context` singleton then logs from `~Context()` after spdlog's own statics are gone → **segfault on a clean quit**. The `RunExtract` bail-outs now use `_Exit()`. |
+| 8 | **Live ImGui menu scaling** `src/port/UI/LighthouseMenuSettings.cpp` | The "ImGui Menu Scaling" option changed the setting but the callback that applies it was commented out upstream, so nothing happened until the next launch. The callback is enabled (same wiring 2 Ship 2 Harkinian ships). |
 
-Two fixes the other quarrel07 port forks carry are **not needed here** — upstream Lighthouse already
-sets the writable data folder via `LSEnvironment SHIP_HOME` and already tears down its context on the
-first-run bail-out paths.
+One fix the other quarrel07 port forks carry is **not needed here** — upstream Lighthouse already
+sets the writable data folder via `LSEnvironment SHIP_HOME`.
 
 ## File layout at runtime
 
