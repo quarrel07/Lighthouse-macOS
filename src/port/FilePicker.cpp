@@ -1,6 +1,6 @@
 #include "port/FilePicker.h"
 
-#if LIGHTHOUSE_NATIVE_FILE_DIALOG
+#if LIGHTHOUSE_NATIVE_FILE_DIALOG && !defined(__APPLE__)
 #include <string>
 #include <vector>
 #include "portable-file-dialogs.h"
@@ -11,7 +11,14 @@ namespace fs = std::filesystem;
 
 namespace Lighthouse {
 
-#if LIGHTHOUSE_NATIVE_FILE_DIALOG
+#if LIGHTHOUSE_NATIVE_FILE_DIALOG && defined(__APPLE__)
+// Implemented in FilePickerMac.mm: an in-process NSOpenPanel/NSSavePanel. The portable-file-dialogs
+// backend drives an external osascript process whose dialog can land behind a fullscreen game window
+// (endless-looking beachball); the app's own panel presents above our fullscreen Space correctly.
+void PickFileMac(Ship::FileBrowserRequest request, std::function<void(std::optional<fs::path>)> onResult);
+#endif
+
+#if LIGHTHOUSE_NATIVE_FILE_DIALOG && !defined(__APPLE__)
 // portable-file-dialogs takes a flat filter list: { label, "*.a *.b", label2, "*.c", ... }.
 static std::vector<std::string> ToPfdFilters(const std::vector<Ship::FileFilter>& filters) {
     std::vector<std::string> out;
@@ -34,7 +41,9 @@ static std::vector<std::string> ToPfdFilters(const std::vector<Ship::FileFilter>
 #endif
 
 void PickFile(Ship::FileBrowserRequest request, std::function<void(std::optional<fs::path>)> onResult) {
-#if LIGHTHOUSE_NATIVE_FILE_DIALOG
+#if LIGHTHOUSE_NATIVE_FILE_DIALOG && defined(__APPLE__)
+    PickFileMac(std::move(request), std::move(onResult));
+#elif LIGHTHOUSE_NATIVE_FILE_DIALOG
     const std::string startDir = request.StartDir.empty() ? "." : request.StartDir.string();
     const std::vector<std::string> filters = ToPfdFilters(request.Filters);
 

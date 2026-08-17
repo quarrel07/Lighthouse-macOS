@@ -22,13 +22,16 @@ namespace Lighthouse {
 // Show a file picker described by @p request and deliver the chosen path (std::nullopt on cancel) to
 // @p onResult.
 //
-//   - Native builds (desktop): a blocking portable-file-dialogs dialog. onResult fires synchronously
-//     on the calling thread before PickFile returns.
+//   - Native builds (Windows/Linux desktop): a blocking portable-file-dialogs dialog. onResult fires
+//     synchronously on the calling thread before PickFile returns.
+//   - Native builds (macOS): an in-process NSOpenPanel/NSSavePanel shown asynchronously. PickFile
+//     returns immediately; onResult fires later on the main thread from the event pump, so the game
+//     keeps rendering (no beachball) and fullscreen is undisturbed. Must be called on the main thread.
 //   - ImGui builds (consoles / arm-linux): libultraship's FileBrowserWindow. onResult fires later on
 //     the render thread; PickFile returns immediately and is safe to call from any thread.
 //
-// Callers written for the async form (kick off, then poll a flag the callback sets) work with both
-// backends unchanged: the native path just sets that flag before returning.
+// Callers written for the async form (kick off, then poll a flag the callback sets) work with all
+// backends unchanged: the blocking path just sets that flag before returning.
 void PickFile(Ship::FileBrowserRequest request, std::function<void(std::optional<std::filesystem::path>)> onResult);
 
 } // namespace Lighthouse

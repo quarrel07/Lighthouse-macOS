@@ -224,6 +224,11 @@ file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 list(FILTER ALL_FILES EXCLUDE REGEX "src/unused/")
 
+if(APPLE)
+    # Objective-C++ sources are not in the glob above; the native file-picker panel lives here.
+    list(APPEND ALL_FILES "src/port/FilePickerMac.mm")
+endif()
+
 list(APPEND ALL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resource.rc)
 
 

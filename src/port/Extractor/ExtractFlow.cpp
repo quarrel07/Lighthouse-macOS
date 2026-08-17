@@ -226,8 +226,12 @@ void GameEngine::RunExtract(int argc, char* argv[]) {
         LighthouseGui::RegisterPopup("Outdated ROM Archives",
                                      "Your ROM archives were created with incompatible versions of Lighthouse.\n"
                                      "You will now be redirected to re-extract them.");
+        // Resolve through the same lookup DetectOTRVersion used to find the archives. The bare
+        // filename is relative to cwd, which on macOS is NOT the data folder (the SHIP_HOME cwd
+        // anchor fails on the unexpanded "~" from LSEnvironment), so the remove silently missed
+        // and the game kept accepting the old archive it had just declared incompatible.
         for (const auto& archive : kRomArchives) {
-            std::filesystem::remove(archive);
+            std::filesystem::remove(Ship::Context::LocateFileAcrossAppDirs(archive));
         }
     }
 
